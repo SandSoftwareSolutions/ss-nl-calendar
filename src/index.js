@@ -1,15 +1,21 @@
 const DAY = 86_400_000;
 const pad = (n, w = 2) => String(n).padStart(w, "0");
+// Date.UTC treats the years 0 to 99 as 1900 to 1999; this does not.
+const utc = (year, month, day) => {
+  const d = new Date(0);
+  d.setUTCFullYear(year, month, day);
+  return d.getTime();
+};
 
 /** Parses `"2026-10-17"` (or a Date, read in UTC) into a UTC-midnight timestamp. Throws on anything that is not a real date. */
 function toTime(input) {
   if (input instanceof Date) {
     if (Number.isNaN(input.getTime())) throw new TypeError("nl-calendar: invalid Date");
-    return Date.UTC(input.getUTCFullYear(), input.getUTCMonth(), input.getUTCDate());
+    return utc(input.getUTCFullYear(), input.getUTCMonth(), input.getUTCDate());
   }
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof input === "string" ? input : "");
   if (!m) throw new TypeError(`nl-calendar: "${input}" is not a date; use "YYYY-MM-DD"`);
-  const t = Date.UTC(+m[1], +m[2] - 1, +m[3]);
+  const t = utc(+m[1], +m[2] - 1, +m[3]);
   const d = new Date(t);
   if (d.getUTCFullYear() !== +m[1] || d.getUTCMonth() !== +m[2] - 1 || d.getUTCDate() !== +m[3]) throw new RangeError(`nl-calendar: "${input}" does not exist`);
   return t;
@@ -144,7 +150,7 @@ export function isoWeek(date) {
   const dow = weekdayOf(t) || 7;
   const thursday = t + (4 - dow) * DAY;
   const year = new Date(thursday).getUTCFullYear();
-  const week = Math.floor((thursday - Date.UTC(year, 0, 1)) / DAY / 7) + 1;
+  const week = Math.floor((thursday - utc(year, 0, 1)) / DAY / 7) + 1;
   return { year, week };
 }
 

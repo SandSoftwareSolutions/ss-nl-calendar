@@ -102,3 +102,37 @@ test("dates are strict and time zones do not matter", () => {
   assert.equal(dayName("2026-10-17", "en-GB"), "Saturday");
   assert.equal(dayName("2026-10-19", "nl-NL", "short"), "ma");
 });
+
+test("holiday table 2025 to 2030 (Easter, Good Friday, King's Day, Liberation Day, Ascension, Whitsun)", () => {
+  const table = {
+    2025: ["2025-04-18", "2025-04-20", "2025-04-21", "2025-04-26", "2025-05-05", "2025-05-29", "2025-06-08", "2025-06-09"],
+    2026: ["2026-04-03", "2026-04-05", "2026-04-06", "2026-04-27", "2026-05-05", "2026-05-14", "2026-05-24", "2026-05-25"],
+    2027: ["2027-03-26", "2027-03-28", "2027-03-29", "2027-04-27", "2027-05-05", "2027-05-06", "2027-05-16", "2027-05-17"],
+    2028: ["2028-04-14", "2028-04-16", "2028-04-17", "2028-04-27", "2028-05-05", "2028-05-25", "2028-06-04", "2028-06-05"],
+    2029: ["2029-03-30", "2029-04-01", "2029-04-02", "2029-04-27", "2029-05-05", "2029-05-10", "2029-05-20", "2029-05-21"],
+    2030: ["2030-04-19", "2030-04-21", "2030-04-22", "2030-04-27", "2030-05-05", "2030-05-30", "2030-06-09", "2030-06-10"]
+  };
+  const ids = ["good-friday", "easter-sunday", "easter-monday", "kings-day", "liberation-day", "ascension", "whit-sunday", "whit-monday"];
+  for (const [year, expected] of Object.entries(table)) {
+    const byId = Object.fromEntries(holidays(Number(year)).map((h) => [h.id, h]));
+    assert.deepEqual(ids.map((id) => byId[id].date), expected, year);
+    assert.equal(byId["liberation-day"].dayOff, year % 5 === 0);
+    assert.equal(byId["new-year"].date, `${year}-01-01`);
+    assert.equal(byId.christmas.date, `${year}-12-25`);
+    assert.equal(byId["boxing-day"].date, `${year}-12-26`);
+  }
+  assert.equal(holidayOn("2025-04-27"), null); // King's Day moved to Saturday 26 April
+  assert.equal(holidayOn("2025-04-26").id, "kings-day");
+});
+
+test("Easter agrees with an independent computus for 1583 to 2500 (spot values from the Oudin algorithm)", () => {
+  const known = { 1583: "1583-04-10", 1600: "1600-04-02", 1818: "1818-03-22", 1943: "1943-04-25", 2000: "2000-04-23", 2038: "2038-04-25", 2049: "2049-04-18", 2285: "2285-03-22" };
+  for (const [year, date] of Object.entries(known)) assert.equal(easter(Number(year)), date);
+});
+
+test("years below 100 are read as those years, not as 1900 + year", () => {
+  assert.equal(toDateString("0050-01-01"), "0050-01-01");
+  assert.equal(toDateString("0099-12-31"), "0099-12-31");
+  assert.deepEqual(isoWeek("0100-01-01"), { year: 99, week: 53 });
+  assert.equal(daysBetween("0001-01-01", "0002-01-01"), 365);
+});
