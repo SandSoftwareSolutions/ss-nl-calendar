@@ -10,6 +10,8 @@ Dutch holidays, working days and ISO week numbers, without an online service and
 npm install @sandsoftwaresolutions/nl-calendar
 ```
 
+Works with `import` and `require()`, and ships TypeScript types for both.
+
 ## Usage
 
 ```js
